@@ -14,6 +14,7 @@ except ImportError:
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
+from matplotlib import pyplot as plt
 
 import urllib
 import json
@@ -21,15 +22,31 @@ import json
 import pandas as pd
 import numpy as np
 
+LARGE_FONT = ("VERDANA", 12)
+NORM_FONT = ("VERDANA", 10)
+SMALL_FONT = ("VERDANA", 8)
+
+
+
 ##print(style.available) #Wyświetlanie możliwych styli
 style.use("bmh") #Wybranie danego stylu wyświetlania wykresów
 
-f = Figure(figsize = (5, 5), dpi = 100) #Tworzymy obiekt Figure
+f = Figure() #Tworzymy obiekt Figure
 #figsize to wielkość tworzonej przestrzeni na wykres
 #(szerokość, wysokość) w calach, dpi to piksele na cal.
 filename = None
 a = f.add_subplot(111)#Możemy dodawać kolejne okna wedle upodobań
 ##b = f.add_subplot(212)
+
+def popupmsg(msg):
+    popup = tk.Tk()
+    
+    popup.wm_title("!")
+    label = ttk.Label(popup, text = msg, font = NORM_FONT)
+    label.pack(side = "top", fill = "x", pady = 10)
+    B1 = ttk.Button(popup, text = "Okay", command = popup.destroy)
+    B1.pack()
+    popup.mainloop()
 
 def animate(i):
     if filename:
@@ -63,6 +80,16 @@ class EcgAnalizer(tk.Tk):
 
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
+
+        menubar = tk.Menu(container)
+        filemenu = tk.Menu(menubar, tearoff = 0)
+        filemenu.add_command(label = "Save settings",
+                             command = lambda: popupmsg("Not supported yet!"))
+        filemenu.add_separator()
+        filemenu.add_command(label = "Exit", command = quit)
+        menubar.add_cascade(label = "File", menu = filemenu)
+
+        tk.Tk.config(self, menu = menubar)
 
         self.frames = {}
 
@@ -133,5 +160,6 @@ class ECG_page(tk.Frame):
 
         
 app = EcgAnalizer()
+app.geometry("800x600")
 anim = animation.FuncAnimation(f, animate, interval=1000)
 app.mainloop()
