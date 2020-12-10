@@ -103,18 +103,8 @@ class StartPage(tk.Frame):
         button2 = ttk.Button(self, text = "Disagree",
                             command = quit)
         button2.pack()
-'''
-class PageOne(tk.Frame):
 
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text = "Page One")
-        label.pack(pady = 10, padx = 10)
 
-        button1 = ttk.Button(self, text = "Back",
-                            command = lambda: controller.show_frame(StartPage))
-        button1.pack()
-'''
 
 class ECG_page(tk.Frame):
 
