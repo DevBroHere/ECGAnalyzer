@@ -36,8 +36,7 @@ f = Figure() #Tworzymy obiekt Figure
 #(szerokość, wysokość) w calach, dpi to piksele na cal.
 filename = None
 a = f.add_subplot(111)#Możemy dodawać kolejne okna wedle upodobań
-##b = f.add_subplot(212)
-
+#b = f.add_subplot(212)
 def popupmsg(msg):
     popup = tk.Tk()
     
@@ -48,25 +47,86 @@ def popupmsg(msg):
     B1.pack()
     popup.mainloop()
 
-def animate(i):
-    if filename:
-        ekgfile = np.fromfile(filename, dtype = np.int16)
+def loadDataOptions():
+    typed = None
+    frequencyd = None
+    resolutiond = None
+    voltaged = None
+
+    window = tk.Tk() # tworzenie okna głównego
+    window.title( "Load settings" ) # ustawienie tytułu okna głównego
+    window.resizable(False, False)
+    labelFrame1 = tk.LabelFrame(window, text = "Type of variables")
+    labelFrame1.grid(row = 0, column = 0)
+    rb_var = tk.StringVar()
+    rb_16 = tk.Radiobutton(labelFrame1, variable = rb_var, value = "16", text = "16-bit")
+    rb_32 = tk.Radiobutton(labelFrame1, variable = rb_var, value = "32", text = "32-bit")
+    rb_var.set("16")
+    rb_16.pack()
+    rb_32.pack()
+
+    labelFrame2 = tk.LabelFrame(window, text = "Sampling frequency", width = 1, height = 10)
+    labelFrame2.grid(row = 0, column = 1)
+    frequency = tk.Entry(labelFrame2, width = 5)
+    frequency.pack()
+
+    labelFrame3 = tk.LabelFrame(window, text = "Resolution", width = 1, height = 10)
+    labelFrame3.grid(row = 1, column = 0)
+    resolution = tk.Entry(labelFrame3, width = 5)
+    resolution.pack()
+
+    labelFrame4 = tk.LabelFrame(window, text = "Input voltage", width = 1, height = 10)
+    labelFrame4.grid(row = 1, column = 1) #pack()#fill = "both", expand = "yes"
+    voltage = tk.Entry(labelFrame4, width = 5)
+    voltage.pack()
+
+    def apply():
+        global x,y
+        typed = int(rb_var.get())
+        frequencyd = int(frequency.get())
+        resolutiond = int(resolution.get())
+        voltaged = int(voltage.get())
+        if typed == 16:
+            ekgfile = np.fromfile(filename, dtype = np.int16)
+        elif typed == 32:
+            ekgfile = np.fromfile(filename, dtype = np.int32)
         x = []
         y = []
         time = 0
         for row in ekgfile:
             y.append(row)
             x.append(time)
-            time += 1/1000
+            time += 1/frequencyd
 
-        b = (2**12) - 1
+        b = (2**resolutiond) - 1
         for i in range(len(y)):
-            y[i] = y[i] * (20/b)
+            y[i] = y[i] * (voltaged/b)
 
         a.clear()
-        a.plot(x, y)
+        a.plot(x,y)
 
+        window.destroy()
         
+
+    applyButton = tk.Button(window, text = "Apply", command = lambda: apply())
+    saveButton = tk.Button(window, text = "Save configuration", command = None)
+    applyButton.grid(row=2, column = 1, sticky = "E", pady = 5)
+    saveButton.grid(row=2, column = 0, sticky = "W", pady = 5)
+
+    window.mainloop() # wywołanie pętli komunikatów
+
+def browseFiles():
+        global filename
+        filename = filedialog.askopenfilename(initialdir = "/", 
+                                          title = "Select a File", 
+                                          filetypes = (("all files", 
+                                                        "*.*"),
+                                                       ("Text files", 
+                                                        "*.txt*")))
+        if filename: 
+            loadDataOptions()
+
+    
 
 class EcgAnalizer(tk.Tk):
 
@@ -81,14 +141,49 @@ class EcgAnalizer(tk.Tk):
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
 
+        #Tworzenie głównego paska menu
         menubar = tk.Menu(container)
+        
+        #Tworzenie części paska "File"
         filemenu = tk.Menu(menubar, tearoff = 0)
-        filemenu.add_command(label = "Save settings",
-                             command = lambda: popupmsg("Not supported yet!"))
+        filemenu.add_command(label = "Open...",
+                             command = lambda: browseFiles())
         filemenu.add_separator()
-        filemenu.add_command(label = "Exit", command = quit)
+        filemenu.add_command(label = "Save",
+                             command = lambda: popupmsg("Not supported yet"))
+        filemenu.add_command(label = "Save as...",
+                             command = lambda: popupmsg("Not supported yet"))
+        filemenu.add_separator()
+        filemenu.add_command(label = "Exit",
+                             command = exit)
         menubar.add_cascade(label = "File", menu = filemenu)
-
+        
+        #Tworzenie części paska "Options"
+        optionsmenu = tk.Menu(menubar, tearoff = 0)
+        optionsmenu.add_command(label = "Sample",
+                                command = lambda: popupmsg("Not supported yet"))
+        optionsmenu.add_command(label = "Configure window",
+                                command = lambda: popupmsg("Not supported yet"))
+        menubar.add_cascade(label = "Options", menu = optionsmenu)
+        
+        #Tworzenie części paska "ECG analysis"
+        ecgmenu = tk.Menu(menubar, tearoff = 0)
+        ecgmenu.add_command(label = "Filter",
+                                command = lambda: popupmsg("Not supported yet"))
+        ecgmenu.add_command(label = "Analyze",
+                                command = lambda: popupmsg("Not supported yet"))
+        menubar.add_cascade(label = "ECG analysis", menu = ecgmenu)
+        
+        #Tworzenie części paska "Help"
+        helpmenu = tk.Menu(menubar, tearoff = 0)
+        helpmenu.add_command(label = "About program",
+                                command = lambda: popupmsg("Not supported yet"))
+        helpmenu.add_separator()
+        helpmenu.add_command(label = "Help",
+                                command = lambda: popupmsg("Not supported yet"))
+        menubar.add_cascade(label = "Help", menu = helpmenu)
+        
+        #Zatwierdzenie menu
         tk.Tk.config(self, menu = menubar)
 
         self.frames = {}
@@ -107,14 +202,6 @@ class EcgAnalizer(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def browseFiles(self):
-        global filename
-        filename = filedialog.askopenfilename(initialdir = "/", 
-                                          title = "Select a File", 
-                                          filetypes = (("Text files", 
-                                                        "*.txt*"), 
-                                                       ("all files", 
-                                                        "*.*")))
 
 class StartPage(tk.Frame):
 
@@ -138,17 +225,7 @@ class ECG_page(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text = "Graph page")
-        label.pack(pady = 10, padx = 10)
-
-        button1 = ttk.Button(self, text = "Back to menu",
-                            command = lambda: controller.show_frame(StartPage))
-        button1.pack()
-
-        button2 = ttk.Button(self, text = "Browse files",
-                            command = lambda: controller.browseFiles())
-        button2.pack()
-
-        
+        label.pack(pady = 10, padx = 10)      
 
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
@@ -161,5 +238,4 @@ class ECG_page(tk.Frame):
         
 app = EcgAnalizer()
 app.geometry("800x600")
-anim = animation.FuncAnimation(f, animate, interval=1000)
 app.mainloop()
