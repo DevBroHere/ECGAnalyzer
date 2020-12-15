@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
 from matplotlib import pyplot as plt
-
+#Zrobiłem sobie coś
 import urllib
 import json
 
@@ -26,7 +26,10 @@ LARGE_FONT = ("VERDANA", 12)
 NORM_FONT = ("VERDANA", 10)
 SMALL_FONT = ("VERDANA", 8)
 
-
+sampleType = 16
+sampleFrequency = None
+sampleResolution = None
+sampleVoltage = None
 
 ##print(style.available) #Wyświetlanie możliwych styli
 style.use("bmh") #Wybranie danego stylu wyświetlania wykresów
@@ -37,96 +40,8 @@ f = Figure() #Tworzymy obiekt Figure
 filename = None
 a = f.add_subplot(111)#Możemy dodawać kolejne okna wedle upodobań
 #b = f.add_subplot(212)
-def popupmsg(msg):
-    popup = tk.Tk()
-    
-    popup.wm_title("!")
-    label = ttk.Label(popup, text = msg, font = NORM_FONT)
-    label.pack(side = "top", fill = "x", pady = 10)
-    B1 = ttk.Button(popup, text = "Okay", command = popup.destroy)
-    B1.pack()
-    popup.mainloop()
-
-def loadDataOptions():
-    typed = None
-    frequencyd = None
-    resolutiond = None
-    voltaged = None
-
-    window = tk.Tk() # tworzenie okna głównego
-    window.title( "Load settings" ) # ustawienie tytułu okna głównego
-    window.resizable(False, False)
-    labelFrame1 = tk.LabelFrame(window, text = "Type of variables")
-    labelFrame1.grid(row = 0, column = 0)
-    rb_var = tk.StringVar()
-    rb_16 = tk.Radiobutton(labelFrame1, variable = rb_var, value = "16", text = "16-bit")
-    rb_32 = tk.Radiobutton(labelFrame1, variable = rb_var, value = "32", text = "32-bit")
-    rb_var.set("16")
-    rb_16.pack()
-    rb_32.pack()
-
-    labelFrame2 = tk.LabelFrame(window, text = "Sampling frequency", width = 1, height = 10)
-    labelFrame2.grid(row = 0, column = 1)
-    frequency = tk.Entry(labelFrame2, width = 5)
-    frequency.pack()
-
-    labelFrame3 = tk.LabelFrame(window, text = "Resolution", width = 1, height = 10)
-    labelFrame3.grid(row = 1, column = 0)
-    resolution = tk.Entry(labelFrame3, width = 5)
-    resolution.pack()
-
-    labelFrame4 = tk.LabelFrame(window, text = "Input voltage", width = 1, height = 10)
-    labelFrame4.grid(row = 1, column = 1) #pack()#fill = "both", expand = "yes"
-    voltage = tk.Entry(labelFrame4, width = 5)
-    voltage.pack()
-
-    def apply():
-        global x,y
-        typed = int(rb_var.get())
-        frequencyd = int(frequency.get())
-        resolutiond = int(resolution.get())
-        voltaged = int(voltage.get())
-        if typed == 16:
-            ekgfile = np.fromfile(filename, dtype = np.int16)
-        elif typed == 32:
-            ekgfile = np.fromfile(filename, dtype = np.int32)
-        x = []
-        y = []
-        time = 0
-        for row in ekgfile:
-            y.append(row)
-            x.append(time)
-            time += 1/frequencyd
-
-        b = (2**resolutiond) - 1
-        for i in range(len(y)):
-            y[i] = y[i] * (voltaged/b)
-
-        a.clear()
-        a.plot(x,y)
-
-        window.destroy()
-        
-
-    applyButton = tk.Button(window, text = "Apply", command = lambda: apply())
-    saveButton = tk.Button(window, text = "Save configuration", command = None)
-    applyButton.grid(row=2, column = 1, sticky = "E", pady = 5)
-    saveButton.grid(row=2, column = 0, sticky = "W", pady = 5)
-
-    window.mainloop() # wywołanie pętli komunikatów
-
-def browseFiles():
-        global filename
-        filename = filedialog.askopenfilename(initialdir = "/", 
-                                          title = "Select a File", 
-                                          filetypes = (("all files", 
-                                                        "*.*"),
-                                                       ("Text files", 
-                                                        "*.txt*")))
-        if filename: 
-            loadDataOptions()
-
-    
+x_global = None
+y_global = None
 
 class EcgAnalizer(tk.Tk):
 
@@ -201,6 +116,12 @@ class EcgAnalizer(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+        
+    def refresh(self):
+        None
+
+    def plotData(self, x, y):
+        ECG_page.plotData(self, x, y)
 
 
 class StartPage(tk.Frame):
@@ -234,8 +155,119 @@ class ECG_page(tk.Frame):
         toolbar = NavigationToolbar2TkAgg(canvas, self)
         toolbar.update()
         canvas._tkcanvas.pack(side = tk.TOP, fill=tk.BOTH, expand = True)
+        
+    def plotData(self, x, y):
+        a.clear()
+        a.plot(x, y)
+        self.update()
+
 
         
 app = EcgAnalizer()
 app.geometry("800x600")
+
+def popupmsg(msg):
+    popup = tk.Tk()
+    
+    popup.wm_title("!")
+    label = ttk.Label(popup, text = msg, font = NORM_FONT)
+    label.pack(side = "top", fill = "x", pady = 10)
+    B1 = ttk.Button(popup, text = "Okay", command = popup.destroy)
+    B1.pack()
+    popup.mainloop()
+    
+def loadDataOptions():
+    typed = None
+    frequencyd = None
+    resolutiond = None
+    voltaged = None
+
+    window = tk.Tk() # tworzenie okna głównego
+    window.title( "Load settings" ) # ustawienie tytułu okna głównego
+    window.resizable(False, False)
+    labelFrame1 = tk.LabelFrame(window, text = "Type of variables")
+    labelFrame1.grid(row = 0, column = 0)
+    rb_var = tk.StringVar()
+    rb_16 = tk.Radiobutton(labelFrame1, variable = rb_var, value = "16", text = "16-bit")
+    rb_32 = tk.Radiobutton(labelFrame1, variable = rb_var, value = "32", text = "32-bit")
+    rb_var.set(str(sampleType))
+    rb_16.pack()
+    rb_32.pack()
+
+    labelFrame2 = tk.LabelFrame(window, text = "Sampling frequency", width = 1, height = 10)
+    labelFrame2.grid(row = 0, column = 1)
+    frequency = tk.Entry(labelFrame2, width = 5)
+    if sampleFrequency:   
+        frequency.delete(0, "end")
+        frequency.insert(0, sampleFrequency)
+    frequency.pack()
+
+    labelFrame3 = tk.LabelFrame(window, text = "Resolution", width = 1, height = 10)
+    labelFrame3.grid(row = 1, column = 0)
+    resolution = tk.Entry(labelFrame3, width = 5)
+    if sampleResolution:
+        resolution.delete(0, "end")
+        resolution.insert(0, sampleResolution)
+    resolution.pack()
+
+    labelFrame4 = tk.LabelFrame(window, text = "Input voltage", width = 1, height = 10)
+    labelFrame4.grid(row = 1, column = 1) #pack()#fill = "both", expand = "yes"
+    voltage = tk.Entry(labelFrame4, width = 5)
+    if sampleVoltage:
+        voltage.delete(0, "end")
+        voltage.insert(0, sampleVoltage)
+    voltage.pack()
+
+    def apply():
+        global x_global, y_global
+        global sampleType, sampleFrequency, sampleResolution, sampleVoltage
+        sampleType = int(rb_var.get())
+        sampleFrequency = int(frequency.get())
+        sampleResolution = int(resolution.get())
+        sampleVoltage = int(voltage.get())
+        if sampleType == 16:
+            ekgfile = np.fromfile(filename, dtype = np.int16)
+        elif sampleType == 32:
+            ekgfile = np.fromfile(filename, dtype = np.int32)
+        x = []
+        y = []
+        time = 0
+        for row in ekgfile:
+            y.append(row)
+            x.append(time)
+            time += 1/sampleFrequency
+
+        b = (2**sampleResolution) - 1
+        for i in range(len(y)):
+            y[i] = y[i] * (sampleVoltage/b)
+
+        x_global = x
+        y_global = y
+
+        app.plotData(x,y)
+
+        window.destroy()
+        
+
+    applyButton = tk.Button(window, text = "Save and apply", command = lambda: apply())
+    #saveButton = tk.Button(window, text = "Save configuration", command = None)
+    applyButton.grid(row=2, column = 1, sticky = "E", pady = 5)
+    #saveButton.grid(row=2, column = 0, sticky = "W", pady = 5)
+
+    window.mainloop() # wywołanie pętli komunikatów
+
+def browseFiles():
+        global filename
+        filename = filedialog.askopenfilename(initialdir = "/", 
+                                          title = "Select a File", 
+                                          filetypes = (("all files", 
+                                                        "*.*"),
+                                                       ("Text files", 
+                                                        "*.txt*")))
+        if filename: 
+            loadDataOptions()
+
+    
+
+
 app.mainloop()
