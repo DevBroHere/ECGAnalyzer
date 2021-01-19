@@ -161,7 +161,9 @@ def analyzeECG(ecg, sampling_rate, method = "dwt"):
 
     #Amplitudy załamków
     P_Amplitude = np.mean(P_peaks[1])
+    Q_Amplitude = np.mean(Q_peaks[1])
     R_Amplitude = np.mean(R_peaks[1])
+    S_Amplitude = np.mean(S_peaks[1])
     T_Amplitude = np.mean(T_peaks[1])
 
     #Odstępy
@@ -196,7 +198,9 @@ def analyzeECG(ecg, sampling_rate, method = "dwt"):
     info["QRS_Time"] = round(QRS_Time, 4)
     info["T_Time"] = round(T_Time, 4)
     info["P_Amplitude"] = round(P_Amplitude, 4)
+    info["Q_Amplitude"] = round(Q_Amplitude, 4)
     info["R_Amplitude"] = round(R_Amplitude, 4)
+    info["S_Amplitude"] = round(S_Amplitude, 4)
     info["T_Amplitude"] = round(T_Amplitude, 4)
     info["PQ_Space"] = round(PQ_Space, 4)
     info["QT_Space"] = round(QT_Space, 4)
@@ -207,6 +211,110 @@ def analyzeECG(ecg, sampling_rate, method = "dwt"):
         print(key, ":", name)
 
     return data, info
+
+def diagnoseECG(info):
+    #Analiza pulsu
+    if info["ECG_Rate_Mean"] < 60:
+        print("Częstotliwość pracy serca poniżej oczekiwanego przedziału \
+60-100 uderzeń na minutę: bradykardia (rzadkoskurcz)")
+    elif info["ECG_Rate_Mean"] > 100:
+        print("Częstotliwość pracy serca powyżej oczekiwanego przedziału \
+60-100 uderzeń na minutę: tachykardia (częstoskurcz)")
+    elif info["ECG_Rate_Mean"] >= 60 and info["ECG_Rate_Mean"] <= 100:
+        print("Częstotliwość pracy serca w normie")
+    #Analiza współczynników HRV
+    if info["HRV_MeanNN"] < 750:
+        print("Średni odstęp RR nieprawidłowy (poniżej 750 ms): pacjent wymaga \
+dalszej diagnozy.")
+    elif info["HRV_MeanNN"] > 750:
+        print("Średni odstęp RR w normie (powyżej 750 ms)")
+    if info["HRV_RMSSD"] > 39 or info["HRV_RMSSD"] < 15:
+        print("Współczynnik HRV rMSSD (pierwiastek kwadratowy ze średniej sumy \
+kwadratów różnic między kolejnymi odstępami RR) nie mieści się w zakresie \
+optymalnym 27±12 ms: pacjent wymaga dalszej diagnozy.")
+    elif info["HRV_RMSSD"] <= 39 and info["HRV_RMSSD"] >= 15:
+        print("Współczynnik HRV rMSSD (pierwiastek kwadratowy ze średniej sumy \
+kwadratów różnic między kolejnymi odstępami RR) mieści się w zakresie \
+optymalnym 27±12 ms: współczynnik w normie.")
+    if info["HRV_SDNN"] < 102 or info["HRV_SDNN"] > 180:
+        print("Współczynnik HRV SDNN (Odchylenie standardowe wszystkich odstępów \
+RR) nie mieści się w zakresie 141±39 ms: pacjent wymaga dalszej diagnozy.")
+        if info["HRV_SDNN"] > 16 and info["HRV_SDNN"] < 73:
+            print("Podejrzenie jednego z powikłań typu: kardiomiopatia przerostowa lub \
+rozstrzeniowa; zapalenie mięśnia sercowego")
+        if info["HRV_SDNN"] > 73 and info["HRV_SDNN"] < 102:
+            print("Podejrzenie wady aortalnej")
+    elif info["HRV_SDNN"] >= 102 or info["HRV_SDNN"] <= 180:
+        print("Współczynnik HRV SDNN (Odchylenie standardowe wszystkich odstępów \
+RR) w normie")
+    #Analiza czasu trwania załamków
+    if info["P_Time"] < 0.08:
+        print("Czas trwania załamka P nie mieści się zakresie normy (poniżej normy): pacjent \
+wymaga dalszej diagnozy.")
+        
+        if info["P_Time"] > 0.12:
+            print("Czas trwania załamka P nie mieści się zakresie normy (powyżej normy): podejrzenie powiększenia lewego przedsionka lub zaburzeń przewodzenia \
+śródprzedsionkowego")
+            
+    elif info["P_Time"] >= 0.08 and info["P_Time"] <= 0.12:
+        print("Czas załamka P w normie")
+        
+    if info["QRS_Time"] < 0.06:
+        print("Czas trwania zespołu QRS nie mieści się w zakresie normy (poniżej normy): pacjent \
+wymaga dalszej diagnozy")
+        if info["QRS_Time"] > 0.1:
+            print("Czas trwania zespołu QRS nie mieści się w zakresie normy (powyżej normy): podejrzenie przerostu komory")
+        if abs(info["Q_Amplitude"]) > info["R_Amplitude"]/4:
+            print("Nieprawidłowa proporcja między załamkiem Q a załamkiem R: podejrzenie zawału serca")
+            
+    elif info["QRS_Time"] >= 0.06 and info["QRS_Time"] <= 0.1:
+        print("Czas zespołu QRS w normie")
+        
+    if info["PQ_Segment"] < 0.04:
+        print("Czas trwania odcinka PQ nie mieści się w normie (poniżej normy): pacjent wymaga \
+dalszej diagnozy")
+        
+    elif info["PQ_Segment"] > 0.1:
+        print("Czas trwania odcinka PQ nie mieści się w normie (powyżej normy): pacjent wymaga \
+dalszej diagnozy")
+        
+    elif info["PQ_Segment"] >= 0.04 or info["PQ_Segment"] <= 0.1:
+        print("Czas trwania odcinka PQ mieści się w normie")
+        
+    if info["PQ_Space"] < 0.12:
+        print("Czas trwania odstępu PQ nie mieści się w normie (poniżej normy): pacjent wymaga \
+dalszej diagnozy")
+    elif info["PQ_Space"] > 0.2:
+        print("Czas trwania odstępu PQ nie mieści się w normie (powyżej normy): pacjent wymaga \
+dalszej diagnozy")
+    elif info["PQ_Space"] >= 0.12 and info["PQ_Space"] <= 0.2:
+        print("Czas trwania odstępu PQ mieści się w normie")
+    if info["ST_Segment"] < 0.06:
+        print("Czas trwania odcinka ST nie mieści się w normie (poniżej normy): \
+pacjent wymaga dalszej diagnozy")
+    elif info["ST_Segment"] > 0.1:
+        print("Czas trwania odcinka ST nie mieści się w normie (powyżej normy): \
+pacjent wymaga dalszej diagnozy")
+    elif info["ST_Segment"] >= 0.6 and info["ST_Segment"] <= 0.1:
+        print("Czas trwania odcinka ST mieści się w normie")
+    if info["T_Time"] < 0.12:
+        print("Czas trwamia załamka T nie mieści się w normie (poniżej normy): \
+pacjent wymaga dalszej diagnozy")
+    if info["T_Time"] > 0.16:
+        print("Czas trwamia załamka T nie mieści się w normie (powyżej normy): \
+pacjent wymaga dalszej diagnozy")
+    if info["T_Time"] >= 0.12 and info["T_Time"] <= 0.16:
+        print("Czas trwania załamka T w normie")
+    if info["QT_Space"]/(info["HRV_MeanNN"]/1000) > 0.455:
+        print("Podejrzenie zespołu długiego QT")
+    if info["QT_Space"]/(info["HRV_MeanNN"]/1000) < 0.33:
+        print("Podejrzenie jednej z chorób: hiperkaliemia, hiperkalcemia lub \
+zespół krótkiego QT.")
+    if info["QT_Space"]/(info["HRV_MeanNN"]/1000) >= 0.33 and info["QT_Space"]/(info["HRV_MeanNN"]/1000) <= 0.455:
+        print("Odstęp QT w normie")
+    #Prawie skończone, jeszcze pozostałe odcinki i załamki oraz poprawa
+    #wartości spoza zakresu.
+    
 
 def showData(ecg, data, sampling_rate):
     #Funkcja umożliwiająca wyświetlenie przeanalizowanych danych
@@ -234,14 +342,17 @@ def showData(ecg, data, sampling_rate):
     hrv_non = nk.hrv_nonlinear(data["R_peaks"][1], sampling_rate=sampling_rate, show=True)
 
     plt.show()
+
         
-    
-
-
 x, y = loadData("rec_1.dat", 1000, 12, 20)
+#x, y = loadData("s0015lre.dat", 10000, 16, 32)
 ecg = []
 ecg.append(x)
 ecg.append(y)
 ecg[1] = nk.ecg_clean(ecg[1], sampling_rate = 1000)
-data, info = analyzeECG(ecg, 1000, method = "dwt")
+ecgnew = []
+ecgnew.append(ecg[0][5000:15000])
+ecgnew.append(ecg[1][5000:15000])
+data, info = analyzeECG(ecgnew, 1000, method = "dwt")
+diagnoseECG(info)
 showData(ecg, data, 1000)
