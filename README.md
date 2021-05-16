@@ -12,3 +12,6 @@ User guide:
 3. Now, when your signal is clear, it is time to set analysis area. To do this go to ECG analysis>Analysis area or simply take option from toolbar menu. Analysis area window should pop up. Enter time period and hit Apply.
 4. Now it's time for a main part, analysis. To do this, go to ECG analysis>Analysis or choose loupe icon on toolbar. In analyis window type sampling rate (default 1000) and choose method. Hit Apply.
 Everything is automated so it does not require too much effort. That's it, the program will now display the diagnosis information for you to save.
+Here's an example of analysis:
+![Example](https://user-images.githubusercontent.com/75490317/118397329-b8914100-b653-11eb-8eb2-90e1c972c656.PNG)
+
