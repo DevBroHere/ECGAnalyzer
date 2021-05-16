@@ -16,3 +16,8 @@ Everything is automated so it does not require too much effort. That's it, the p
 Here's an example of analysis:
 ![Example](https://user-images.githubusercontent.com/75490317/118397329-b8914100-b653-11eb-8eb2-90e1c972c656.PNG)
 
+Implementation of applications is for the needs of studies and further engineering work. The intention is that the detection algorithms used in the software are to be used for machine learning.
+
+Author:
+Cezary Bujak
+
